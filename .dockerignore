@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+.git
+.github
+.vscode
+.idea
+*.log
+.DS_Store
+.env*
+tests
+vitest.config.js
+plan.md
+CLAUDE.md

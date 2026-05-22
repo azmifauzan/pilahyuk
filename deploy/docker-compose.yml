@@ -1,0 +1,25 @@
+# Production docker-compose untuk VPS.
+# CATATAN: network external `nginx-proxy` di bawah harus diganti dengan nama
+# network yang dipakai Nginx Proxy / NPM / Traefik existing di VPS.
+# Sesuaikan VIRTUAL_HOST / LETSENCRYPT_HOST kalau pakai jwilder/nginx-proxy.
+# Kalau pakai Traefik, ganti `environment` jadi `labels` traefik.
+
+services:
+  pilahyuk:
+    image: azmifauzan/pilahyuk:latest
+    container_name: pilahyuk
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - proxy
+    environment:
+      VIRTUAL_HOST: pilahyuk.aspriai.my.id
+      VIRTUAL_PORT: "80"
+      LETSENCRYPT_HOST: pilahyuk.aspriai.my.id
+      LETSENCRYPT_EMAIL: admin@aspriai.my.id
+
+networks:
+  proxy:
+    external: true
+    name: nginx-proxy
