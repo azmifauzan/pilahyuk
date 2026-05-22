@@ -16,7 +16,7 @@
 | - | **Repo** | GitHub public (open source, MIT License) |
 | - | **Image registry** | Docker Hub (public) |
 | - | **Deploy** | Manual: build lokal → push Docker Hub → pull di VPS → docker-compose up |
-| 6 | **Mode** | Timer-based (90 detik) |
+| 6 | **Mode** | Timer-based (60 detik) |
 
 ---
 
@@ -34,12 +34,12 @@
 ## 🎮 Konsep Game
 
 **Genre:** Casual arcade / sorting (single player, browser-based)  
-**Durasi:** 90 detik per ronde  
+**Durasi:** 60 detik per ronde  
 **Platform:** Web (mobile-first responsive), no install needed  
 **Bahasa:** Bahasa Indonesia (opsi Sunda di v2)
 
 ### Premise
-TPA Sarimukti penuh, truk sampah dibatasi 40 rit. Sebagai warga RT, kamu harus pilah sampah secepat mungkin selama 90 detik. Skor tertinggi = Pendekar Pilah RT!
+TPA Sarimukti penuh, truk sampah dibatasi 40 rit. Sebagai warga RT, kamu harus pilah sampah secepat mungkin selama 60 detik. Skor tertinggi = Pendekar Pilah RT!
 
 ---
 
@@ -47,7 +47,7 @@ TPA Sarimukti penuh, truk sampah dibatasi 40 rit. Sebagai warga RT, kamu harus p
 
 ```
 ┌─────────────────────────────────────────┐
-│  ⏱ 1:30        SKOR: 250                │
+│  ⏱ 1:00        SKOR: 250                │
 │                                         │
 │                                         │
 │   ┌────────────────────────────────┐    │
@@ -73,9 +73,9 @@ TPA Sarimukti penuh, truk sampah dibatasi 40 rit. Sebagai warga RT, kamu harus p
 | Lewat (miss) | -3 | Suara mendesah pelan |
 
 ### Difficulty Progression
-- 0–30 detik: speed normal, spawn tiap 2 detik
-- 30–60 detik: speed +25%, spawn tiap 1.5 detik
-- 60–90 detik: speed +50%, spawn tiap 1.2 detik, item tricky lebih sering muncul
+- 0–20 detik: speed normal, spawn tiap 2 detik
+- 20–40 detik: speed +25%, spawn tiap 1.5 detik
+- 40–60 detik: speed +50%, spawn tiap 1.2 detik, item tricky lebih sering muncul
 
 ---
 
@@ -214,7 +214,7 @@ pilahyuk/
 - [ ] Conveyor belt mechanic (spawn, movement, despawn)
 - [ ] 3 tombol kategori + tap handler
 - [ ] Collision/proximity check (item di atas belt → tombol)
-- [ ] Score system + timer 90 detik
+- [ ] Score system + timer 60 detik
 - [ ] Game over screen + restart
 
 ### Phase 2 — Polish (2–3 hari)

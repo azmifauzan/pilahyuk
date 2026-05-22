@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**PilahYuk!** — browser-based waste-sorting education game for masyarakat Indonesia (Bahasa Indonesia). Conveyor-belt tap mechanic, 90-second rounds, 3 categories (Organik / Anorganik / B3). Regulation reference used internally is Perda Bandung Raya (3-jenis), but user-facing copy MUST stay nation-wide framing — never say "Bandung Raya", "Bandung", or any specific kota/RT in tags, descriptions, README, in-game text, or marketing copy. Open source (MIT), single-player, mobile-first.
+**PilahYuk!** — browser-based waste-sorting education game for masyarakat Indonesia (Bahasa Indonesia). Conveyor-belt tap mechanic, 60-second rounds, 3 categories (Organik / Anorganik / B3). Regulation reference used internally is Perda Bandung Raya (3-jenis), but user-facing copy MUST stay nation-wide framing — never say "Bandung Raya", "Bandung", or any specific kota/RT in tags, descriptions, README, in-game text, or marketing copy. Open source (MIT), single-player, mobile-first.
 
 `plan.md` is the source of truth for product/design decisions — read it before changing scope, scoring rules, item lists, or category logic. All decisions in its "Keputusan Final" table are locked unless the user says otherwise.
 
@@ -57,10 +57,10 @@ Test commands TBD — no test framework chosen yet in `plan.md`.
 
 Hardcoded constants future code must match `plan.md`:
 
-- Round length: **90 seconds**
+- Round length: **60 seconds**
 - Scoring: correct **+10**, 5x combo bonus **+25**, wrong **-5**, miss **-3**
-- Difficulty tiers: 0–30s normal (spawn 2s), 30–60s +25% speed (spawn 1.5s), 60–90s +50% speed (spawn 1.2s)
-- Item DB: 10 Organik, 12 Anorganik (7 recyclable + 5 residue non-B3), 8 B3 = 30 total. Exact lists in `plan.md` §"30 Item Sampah". Treat that list as draft pending DLH/RT validation — flag changes to the user, don't silently re-balance.
+- Difficulty tiers: 0–20s normal (spawn 2s), 20–40s +25% speed (spawn 1.5s), 40–60s +50% speed (spawn 1.2s)
+- Item DB: 100 items (30 Organik, 45 Anorganik (30 recyclable + 15 residue), 25 B3). Exact lists in `src/data/wasteItems.js`. Treat that list as draft pending DLH/RT validation — flag changes to the user, don't silently re-balance.
 - Residue items (Popok, Pembalut, Styrofoam kotor, Sachet, Masker) sort as Anorganik but must trigger an educational popup explaining they are residue.
 - Wrong-sort popup is mandatory educational content, not optional polish.
 

@@ -12,14 +12,8 @@ services:
     expose:
       - "80"
     networks:
-      - proxy
-    environment:
-      VIRTUAL_HOST: pilahyuk.aspriai.my.id
-      VIRTUAL_PORT: "80"
-      LETSENCRYPT_HOST: pilahyuk.aspriai.my.id
-      LETSENCRYPT_EMAIL: admin@aspriai.my.id
+      - pilahyuk
 
 networks:
-  proxy:
-    external: true
-    name: nginx-proxy
+  pilahyuk:
+    external: true    

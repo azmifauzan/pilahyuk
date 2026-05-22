@@ -7,6 +7,7 @@ import { TutorialScene } from './scenes/TutorialScene.js'
 import { AboutScene } from './scenes/AboutScene.js'
 import { GameScene } from './scenes/GameScene.js'
 import { GameOverScene } from './scenes/GameOverScene.js'
+import { EducationDetailScene } from './scenes/EducationDetailScene.js'
 
 const game = new Phaser.Game({
   ...GAME_CONFIG,
@@ -16,7 +17,7 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
-  scene: [BootScene, PreloadScene, MenuScene, TutorialScene, AboutScene, GameScene, GameOverScene]
+  scene: [BootScene, PreloadScene, MenuScene, TutorialScene, AboutScene, GameScene, GameOverScene, EducationDetailScene]
 })
 
 if (import.meta.env.DEV) window.__PILAHYUK__ = game

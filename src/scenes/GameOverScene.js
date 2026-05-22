@@ -1,6 +1,5 @@
 import Phaser from 'phaser'
-import QRCode from 'qrcode'
-import { SCENE_KEYS, GAME_WIDTH, GAME_HEIGHT } from '../config/gameConfig.js'
+import { SCENE_KEYS, GAME_WIDTH, GAME_HEIGHT, FONT } from '../config/gameConfig.js'
 import { saveHighScore, loadHighScore } from '../game/highscore.js'
 
 const GAME_URL = 'https://pilahyuk.aspriai.my.id'
@@ -15,6 +14,7 @@ export class GameOverScene extends Phaser.Scene {
       score: 0, maxCombo: 0, correctCount: 0,
       wrongCount: 0, missCount: 0, accuracy: 0
     }
+    this.seenItems = data?.seenItems ?? []
   }
 
   create() {
@@ -22,119 +22,380 @@ export class GameOverScene extends Phaser.Scene {
     const newHigh = saveHighScore(this.summary.score)
     const isNewRecord = this.summary.score > 0 && this.summary.score >= newHigh
 
-    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0f172a)
+    // Background
+    this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xf0fdf4)
 
-    // header
-    this.add.text(cx, 70, 'Waktu Habis!', {
-      fontSize: '38px', color: '#ffffff', fontStyle: 'bold'
-    }).setOrigin(0.5)
-
-    // score
-    this.add.text(cx, 140, `${this.summary.score}`, {
-      fontSize: '56px', color: '#fde047', fontStyle: 'bold'
-    }).setOrigin(0.5)
-    this.add.text(cx, 185, 'poin', {
-      fontSize: '18px', color: '#94a3b8'
-    }).setOrigin(0.5)
-
+    // Confetti celebration if new highscore!
     if (isNewRecord) {
-      const rec = this.add.text(cx, 220, '🏆 REKOR BARU!', {
-        fontSize: '22px', color: '#22c55e', fontStyle: 'bold'
-      }).setOrigin(0.5)
-      this.tweens.add({
-        targets: rec, scaleX: 1.06, scaleY: 1.06,
-        duration: 500, yoyo: true, repeat: -1
+      this.time.addEvent({
+        delay: 180,
+        callback: () => {
+          if (!this.sys.isActive()) return
+          const colors = [0xf59e0b, 0xef4444, 0x10b981, 0x3b82f6, 0xec4899, 0xa855f7]
+          for (let i = 0; i < 6; i++) {
+            const color = Phaser.Utils.Array.GetRandom(colors)
+            const px = Phaser.Math.Between(10, GAME_WIDTH - 10)
+            const circle = this.add.circle(px, -20, Phaser.Math.Between(4, 8), color).setDepth(20)
+            
+            this.tweens.add({
+              targets: circle,
+              y: GAME_HEIGHT + 20,
+              x: px + Phaser.Math.Between(-90, 90),
+              angle: Phaser.Math.Between(180, 720),
+              duration: Phaser.Math.Between(2200, 3600),
+              ease: 'Quad.easeOut',
+              onComplete: () => circle.destroy()
+            })
+          }
+        },
+        repeat: 12
       })
+    }
+
+    // Header
+    const headerColor = isNewRecord ? '#d97706' : '#064e3b'
+    const headerText = isNewRecord ? '🏆 Rekor Baru!' : '⏱ Waktu Habis!'
+    this.add.text(cx, 54, headerText, {
+      fontSize: '34px', color: headerColor, fontStyle: 'bold', fontFamily: FONT
+    }).setOrigin(0.5)
+
+    // Score Card Background
+    const scoreCard = this.add.graphics()
+    scoreCard.fillStyle(0xffffff, 0.85)
+    scoreCard.fillRoundedRect(32, 100, GAME_WIDTH - 64, 120, 20)
+    scoreCard.lineStyle(2, 0xd1fae5)
+    scoreCard.strokeRoundedRect(32, 100, GAME_WIDTH - 64, 120, 20)
+
+    // Score
+    this.add.text(cx, 142, `${this.summary.score}`, {
+      fontSize: '56px', color: '#d97706', fontStyle: 'bold', fontFamily: FONT
+    }).setOrigin(0.5)
+    this.add.text(cx, 194, 'poin', {
+      fontSize: '15px', color: '#9ca3af', fontFamily: FONT
+    }).setOrigin(0.5)
+
+    // Record line
+    if (isNewRecord) {
+      const rec = this.add.text(cx, 240, '✨ Skor tertinggi baru!', {
+        fontSize: '16px', color: '#16a34a', fontStyle: 'bold', fontFamily: FONT
+      }).setOrigin(0.5)
+      this.tweens.add({ targets: rec, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1 })
     } else {
       const hs = loadHighScore()
       if (hs > 0) {
-        this.add.text(cx, 220, `Rekor: ${hs}`, {
-          fontSize: '17px', color: '#94a3b8'
+        this.add.text(cx, 240, `🏆 Rekor Terbaik: ${hs} poin`, {
+          fontSize: '16px', color: '#b45309', fontStyle: 'bold', fontFamily: FONT
         }).setOrigin(0.5)
       }
     }
 
-    // stats grid
-    const stats = [
-      ['✅ Benar', this.summary.correctCount],
-      ['❌ Salah', this.summary.wrongCount],
-      ['💨 Lewat', this.summary.missCount],
-      ['🔥 Combo max', this.summary.maxCombo],
-      ['🎯 Akurasi', `${Math.round(this.summary.accuracy * 100)}%`]
-    ]
-    const statY = 258
-    stats.forEach(([label, value], i) => {
-      const row = Math.floor(i / 2)
-      const col = i % 2
-      const sx = col === 0 ? cx - 90 : cx + 90
-      const sy = statY + row * 40
-      this.add.text(sx, sy, label, {
-        fontSize: '13px', color: '#64748b'
-      }).setOrigin(0.5)
-      this.add.text(sx, sy + 18, `${value}`, {
-        fontSize: '18px', color: '#e2e8f0', fontStyle: 'bold'
-      }).setOrigin(0.5)
-    })
+    this._drawDivider(262)
+    this._drawStats(276)
+    this._drawDivider(450)
 
-    // action buttons
-    const restartBtn = this.add.rectangle(cx, 450, 260, 64, 0x22c55e)
-      .setStrokeStyle(4, 0x166534)
-      .setInteractive({ useHandCursor: true })
-    this.add.text(cx, 450, 'MAIN LAGI', {
-      fontSize: '24px', color: '#ffffff', fontStyle: 'bold'
-    }).setOrigin(0.5)
-    restartBtn.on('pointerdown', () =>
-      this.tweens.add({ targets: restartBtn, scaleX: 0.95, scaleY: 0.95, duration: 80, yoyo: true })
-    )
-    restartBtn.on('pointerup', () => this.scene.start(SCENE_KEYS.GAME))
+    // Action buttons (Play again, main menu, share)
+    this._buildButtons(cx, 484)
 
-    const menuBtn = this.add.rectangle(cx, 530, 200, 50, 0x334155)
-      .setStrokeStyle(3, 0x475569)
-      .setInteractive({ useHandCursor: true })
-    this.add.text(cx, 530, 'Menu', {
-      fontSize: '19px', color: '#ffffff'
-    }).setOrigin(0.5)
-    menuBtn.on('pointerup', () => this.scene.start(SCENE_KEYS.MENU))
-
-    // WhatsApp share button
-    const waBtn = this.add.rectangle(cx, 608, 260, 54, 0x25D366)
-      .setStrokeStyle(3, 0x128C7E)
-      .setInteractive({ useHandCursor: true })
-    this.add.text(cx, 608, '📱 Bagikan ke WhatsApp', {
-      fontSize: '16px', color: '#ffffff', fontStyle: 'bold'
-    }).setOrigin(0.5)
-    waBtn.on('pointerup', () => {
-      const text = `Saya dapat skor ${this.summary.score} di PilahYuk! Game edukasi pilah sampah Indonesia 🗑️♻️\nCoba kamu: ${GAME_URL}`
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
-    })
-
-    // QR code
-    this.add.text(cx, 660, 'Scan untuk share ke teman:', {
-      fontSize: '13px', color: '#64748b'
-    }).setOrigin(0.5)
-
-    this._generateQR(cx, 755)
+    // Education summary below buttons (clean, overflow-free)
+    this._drawDivider(650)
+    this._buildEducationSection(cx, 665)
   }
 
-  _generateQR(cx, y) {
-    const offscreen = document.createElement('canvas')
-    QRCode.toCanvas(offscreen, GAME_URL, {
-      width: 130,
-      margin: 1,
-      color: { dark: '#ffffffff', light: '#0f172aff' }
+  _drawDivider(y) {
+    const divGfx = this.add.graphics()
+    divGfx.lineStyle(1.5, 0xd1fae5)
+    divGfx.lineBetween(16, y, GAME_WIDTH - 16, y)
+  }
+
+  // Premium Grid-Based Card Stats Display
+  _drawStats(startY) {
+    const cx = GAME_WIDTH / 2
+    const stats = [
+      { label: 'Benar', value: this.summary.correctCount, color: 0x16a34a, emoji: '✅' },
+      { label: 'Salah', value: this.summary.wrongCount, color: 0xdc2626, emoji: '❌' },
+      { label: 'Lewat', value: this.summary.missCount, color: 0x6b7280, emoji: '💨' },
+      { label: 'Combo Max', value: this.summary.maxCombo, color: 0xd97706, emoji: '🔥' },
+      { label: 'Akurasi', value: `${Math.round(this.summary.accuracy * 100)}%`, color: 0x2563eb, emoji: '🎯' }
+    ]
+
+    stats.forEach((stat, i) => {
+      const isLast = i === stats.length - 1
+      const row = Math.floor(i / 2)
+      const col = i % 2
+
+      // Positions
+      let cardX = isLast ? cx : (col === 0 ? cx - 105 : cx + 105)
+      let cardY = startY + row * 66
+      
+      let cardW = isLast ? 350 : 190
+      let cardH = 54
+
+      // Draw a beautiful tile card with drop shadow
+      const cardGfx = this.add.graphics()
+      // Shadow
+      cardGfx.fillStyle(0x000000, 0.04)
+      cardGfx.fillRoundedRect(cardX - cardW / 2 + 1, cardY - cardH / 2 + 2, cardW, cardH, 12)
+      
+      // Card Body
+      cardGfx.fillStyle(0xffffff, 0.95)
+      cardGfx.fillRoundedRect(cardX - cardW / 2, cardY - cardH / 2, cardW, cardH, 12)
+      cardGfx.lineStyle(2, stat.color, 0.25)
+      cardGfx.strokeRoundedRect(cardX - cardW / 2, cardY - cardH / 2, cardW, cardH, 12)
+
+      if (isLast) {
+        // Full width accuracy card
+        const emojiText = this.add.text(cardX - 130, cardY, stat.emoji, { fontSize: '24px' }).setOrigin(0.5)
+        const labelText = this.add.text(cardX - 100, cardY, stat.label, {
+          fontSize: '14px', color: '#4b5563', fontFamily: FONT, fontStyle: 'bold'
+        }).setOrigin(0, 0.5)
+        const valueText = this.add.text(cardX + 130, cardY, stat.value, {
+          fontSize: '22px', color: stat.color, fontStyle: 'bold', fontFamily: FONT
+        }).setOrigin(1, 0.5)
+      } else {
+        // Standard split card
+        const emojiText = this.add.text(cardX - cardW / 2 + 24, cardY, stat.emoji, { fontSize: '20px' }).setOrigin(0.5)
+        
+        const labelText = this.add.text(cardX - cardW / 2 + 50, cardY - 8, stat.label, {
+          fontSize: '11px', color: '#6b7280', fontFamily: FONT, fontStyle: 'bold'
+        }).setOrigin(0, 0.5)
+        
+        const valueText = this.add.text(cardX - cardW / 2 + 50, cardY + 10, `${stat.value}`, {
+          fontSize: '17px', color: '#111827', fontStyle: 'bold', fontFamily: FONT
+        }).setOrigin(0, 0.5)
+      }
     })
-      .then(() => {
-        const key = 'qr-pilahyuk'
-        if (this.textures.exists(key)) this.textures.remove(key)
-        const tex = this.textures.addCanvas(key, offscreen)
-        if (tex) {
-          this.add.image(cx, y, key).setDisplaySize(120, 120)
+  }
+
+  _buildButtons(cx, topY) {
+    // MAIN LAGI (Green 3D Pill)
+    this._makeButton(cx, topY, 280, 48, 0x16a34a, '#ffffff', 'MAIN LAGI', 18, () => {
+      this.scene.start(SCENE_KEYS.GAME)
+    })
+
+    // Menu Utama (Grey 3D Pill)
+    this._makeButton(cx, topY + 54, 200, 38, 0xf1f5f9, '#374151', 'Menu Utama', 15, () => {
+      this.scene.start(SCENE_KEYS.MENU)
+    }, 0xd1d5db)
+
+    // Bagikan Skor Section (Title + 4 Social Buttons)
+    this.add.text(cx, topY + 98, '📢 BAGIKAN SKOR', {
+      fontSize: '11px', color: '#9ca3af', fontStyle: 'bold', fontFamily: FONT
+    }).setOrigin(0.5)
+
+    const shareY = topY + 128
+    const btnGap = 80
+    const text = `Saya berhasil memilah ${this.summary.correctCount} sampah dan meraih skor ${this.summary.score} di PilahYuk! 🗑️♻️\nAyo uji ketangkasan pilah sampahmu selama 60 detik di: ${GAME_URL}`
+
+    const sharePlatforms = [
+      {
+        name: 'WhatsApp',
+        color: 0x25D366,
+        emoji: '💬',
+        url: `https://wa.me/?text=${encodeURIComponent(text)}`
+      },
+      {
+        name: 'Telegram',
+        color: 0x0088cc,
+        emoji: '✈️',
+        url: `https://t.me/share/url?url=${encodeURIComponent(GAME_URL)}&text=${encodeURIComponent(text)}`
+      },
+      {
+        name: 'Facebook',
+        color: 0x1877F2,
+        emoji: '👥',
+        url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(GAME_URL)}`
+      },
+      {
+        name: 'Twitter',
+        color: 0x111111,
+        emoji: '✖️',
+        url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`
+      }
+    ]
+
+    sharePlatforms.forEach((p, idx) => {
+      const px = cx - (btnGap * 1.5) + idx * btnGap
+      this._makeCircleButton(px, shareY, 48, p.color, '#ffffff', p.emoji, 18, () => {
+        window.open(p.url, '_blank')
+      })
+    })
+  }
+
+  // Circular 3D Social sharing button
+  _makeCircleButton(x, y, size, fillColor, textColor, emoji, fontSize, onTap) {
+    const btnContainer = this.add.container(x, y)
+
+    // Shadow
+    const shadowGfx = this.add.graphics()
+    shadowGfx.fillStyle(0x000000, 0.12)
+    shadowGfx.fillCircle(1.5, 3, size / 2)
+
+    // Surface
+    const btnGfx = this.add.graphics()
+    btnGfx.fillStyle(fillColor)
+    btnGfx.fillCircle(0, 0, size / 2)
+
+    // Gloss Shine Highlight
+    const shineGfx = this.add.graphics()
+    shineGfx.fillStyle(0xffffff, 0.12)
+    shineGfx.fillCircle(-2, -2, size / 2 - 4)
+
+    const emojiText = this.add.text(0, 0, emoji, {
+      fontSize: `${fontSize}px`, color: textColor, fontFamily: FONT
+    }).setOrigin(0.5)
+
+    btnContainer.add([shadowGfx, btnGfx, shineGfx, emojiText])
+
+    const hit = this.add.circle(0, 0, size / 2, 0x000000, 0)
+      .setInteractive({ useHandCursor: true })
+    btnContainer.add(hit)
+
+    hit.on('pointerover', () => {
+      this.tweens.add({ targets: btnContainer, scaleX: 1.1, scaleY: 1.1, duration: 100 })
+    })
+
+    hit.on('pointerout', () => {
+      this.tweens.add({ targets: btnContainer, scaleX: 1.0, scaleY: 1.0, duration: 100 })
+    })
+
+    hit.on('pointerdown', () => {
+      this.tweens.add({
+        targets: btnContainer,
+        scaleX: 0.9, scaleY: 0.9,
+        duration: 75,
+        yoyo: true,
+        onComplete: onTap
+      })
+    })
+  }
+
+  _makeButton(x, y, w, h, fillColor, textColor, label, fontSize, onTap, borderColor = null) {
+    const btnContainer = this.add.container(x, y)
+
+    const shadowGfx = this.add.graphics()
+    shadowGfx.fillStyle(0x000000, 0.12)
+    shadowGfx.fillRoundedRect(-w / 2 + 2, -h / 2 + 4, w, h, h / 2)
+
+    const btnGfx = this.add.graphics()
+    btnGfx.fillStyle(fillColor)
+    btnGfx.fillRoundedRect(-w / 2, -h / 2, w, h, h / 2)
+    if (borderColor) {
+      btnGfx.lineStyle(2, borderColor)
+      btnGfx.strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2)
+    }
+
+    const shineGfx = this.add.graphics()
+    shineGfx.fillStyle(0xffffff, fillColor === 0x16a34a ? 0.16 : 0.08)
+    shineGfx.fillRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h / 2 - 3, { tl: h / 2 - 3, tr: h / 2 - 3, bl: 0, br: 0 })
+
+    const labelText = this.add.text(0, 0, label, {
+      fontSize: `${fontSize}px`, color: textColor, fontStyle: 'bold', fontFamily: FONT
+    }).setOrigin(0.5)
+
+    btnContainer.add([shadowGfx, btnGfx, shineGfx, labelText])
+
+    const hit = this.add.rectangle(0, 0, w, h, 0x000000, 0)
+      .setInteractive({ useHandCursor: true })
+    btnContainer.add(hit)
+
+    hit.on('pointerover', () => {
+      this.tweens.add({ targets: btnContainer, scaleX: 1.05, scaleY: 1.05, duration: 100 })
+    })
+
+    hit.on('pointerout', () => {
+      this.tweens.add({ targets: btnContainer, scaleX: 1.0, scaleY: 1.0, duration: 100 })
+    })
+
+    hit.on('pointerdown', () => {
+      this.tweens.add({
+        targets: btnContainer,
+        scaleX: 0.94, scaleY: 0.94,
+        duration: 75,
+        yoyo: true,
+        onComplete: onTap
+      })
+    })
+  }
+
+  // Proper Education Summary Card with a beautiful dedicated detail page button
+  _buildEducationSection(cx, topY) {
+    this.add.text(cx, topY, '📚 Edukasi Sampah Ronde Ini', {
+      fontSize: '16px', color: '#064e3b', fontStyle: 'bold', fontFamily: FONT
+    }).setOrigin(0.5)
+
+    const cardY = topY + 20
+    const cardW = GAME_WIDTH - 32
+    const cardH = 120
+
+    // Card background
+    const cardGfx = this.add.graphics()
+    cardGfx.fillStyle(0xffffff, 0.9)
+    cardGfx.fillRoundedRect(16, cardY, cardW, cardH, 16)
+    cardGfx.lineStyle(1.5, 0xd1fae5)
+    cardGfx.strokeRoundedRect(16, cardY, cardW, cardH, 16)
+
+    const textStyle = { fontSize: '13px', color: '#374151', align: 'center', fontFamily: FONT, wordWrap: { width: cardW - 32 } }
+
+    if (!this.seenItems || this.seenItems.length === 0) {
+      this.add.text(cx, cardY + cardH / 2, 'Tidak ada item sampah yang terlihat pada ronde ini. Mainkan game untuk membuka edukasi!', textStyle).setOrigin(0.5)
+      return
+    }
+
+    // High level summary
+    this.add.text(cx, cardY + 26, `Kamu berhasil menemui ${this.seenItems.length} jenis sampah!\nMari pelajari fakta daur ulang & pembuangannya agar kelak lingkungan tetap asri.`, {
+      ...textStyle,
+      fontStyle: 'bold',
+      color: '#047857'
+    }).setOrigin(0.5)
+
+    // Sleek 3D button to launch the library details page
+    const libBtnY = cardY + 84
+    const libBtnW = 260
+    const libBtnH = 42
+
+    const libContainer = this.add.container(cx, libBtnY)
+    
+    const libShadow = this.add.graphics()
+    libShadow.fillStyle(0x000000, 0.1)
+    libShadow.fillRoundedRect(-libBtnW / 2 + 2, -libBtnH / 2 + 4, libBtnW, libBtnH, libBtnH / 2)
+
+    const libSurface = this.add.graphics()
+    libSurface.fillStyle(0xfef3c7) // Amber/Gold tone
+    libSurface.fillRoundedRect(-libBtnW / 2, -libBtnH / 2, libBtnW, libBtnH, libBtnH / 2)
+    libSurface.lineStyle(2, 0xfbbf24)
+    libSurface.strokeRoundedRect(-libBtnW / 2, -libBtnH / 2, libBtnW, libBtnH, libBtnH / 2)
+
+    const libLabel = this.add.text(0, 0, `📖 Lihat Detail Edukasi (${this.seenItems.length})`, {
+      fontSize: '14px', color: '#92400e', fontStyle: 'bold', fontFamily: FONT
+    }).setOrigin(0.5)
+
+    libContainer.add([libShadow, libSurface, libLabel])
+
+    const libHit = this.add.rectangle(0, 0, libBtnW, libBtnH, 0x000000, 0)
+      .setInteractive({ useHandCursor: true })
+    libContainer.add(libHit)
+
+    libHit.on('pointerover', () => {
+      this.tweens.add({ targets: libContainer, scaleX: 1.05, scaleY: 1.05, duration: 100 })
+    })
+
+    libHit.on('pointerout', () => {
+      this.tweens.add({ targets: libContainer, scaleX: 1.0, scaleY: 1.0, duration: 100 })
+    })
+
+    libHit.on('pointerdown', () => {
+      this.tweens.add({
+        targets: libContainer,
+        scaleX: 0.94, scaleY: 0.94,
+        duration: 75,
+        yoyo: true,
+        onComplete: () => {
+          this.scene.start(SCENE_KEYS.EDUCATION, {
+            summary: this.summary,
+            seenItems: this.seenItems
+          })
         }
       })
-      .catch(() => {
-        this.add.text(cx, y, GAME_URL, {
-          fontSize: '12px', color: '#475569', align: 'center'
-        }).setOrigin(0.5)
-      })
+    })
   }
 }
