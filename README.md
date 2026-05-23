@@ -12,9 +12,9 @@ Banyak rumah tangga belum terbiasa memilah sampah dari sumber, padahal pemilahan
 
 ## Cara main
 
-- Sampah jalan di conveyor selama **90 detik**.
+- Sampah jalan di conveyor selama **60 detik** dengan **3 nyawa**.
 - Tap tombol kategori (🟢 Organik / 🟡 Anorganik / 🔴 B3) saat sampah masih di belt.
-- Benar **+10** · Combo 5x **+25 bonus** · Salah **-5** · Lewat **-3**.
+- Benar **+10** · Combo 5x **+25 bonus** · Salah **-1 nyawa** · Lewat **-3 poin**.
 - Setiap kesalahan menampilkan popup edukasi.
 
 ## Stack

@@ -42,4 +42,10 @@ describe('highscore', () => {
     expect(loadHighScore(null)).toBe(0)
     expect(saveHighScore(100, null)).toBe(0)
   })
+
+  it('loadHighScore and saveHighScore work without explicit storage (real localStorage path)', () => {
+    // exercises safeStorage() which checks typeof localStorage
+    expect(() => loadHighScore()).not.toThrow()
+    expect(() => saveHighScore(0)).not.toThrow()
+  })
 })

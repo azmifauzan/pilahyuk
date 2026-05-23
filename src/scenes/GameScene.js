@@ -6,7 +6,9 @@ import {
   ROUND_SECONDS,
   BASE_BELT_SPEED_PX_PER_SEC,
   CATEGORY_IDS,
-  CATEGORY_LABEL
+  CATEGORY_LABEL,
+  START_LIVES,
+  FONT
 } from '../config/gameConfig.js'
 import { Scoring } from '../game/scoring.js'
 import { Conveyor } from '../game/conveyor.js'
@@ -25,6 +27,7 @@ const HUD_H = 90
 
 const CAT_EMOJI = { organik: '🌱', anorganik: '♻️', b3: '☢️' }
 const CAT_BTN_COLOR = { organik: 0x16a34a, anorganik: 0xd97706, b3: 0xdc2626 }
+const CAT_TEXT_COLOR = { organik: '#16a34a', anorganik: '#d97706', b3: '#dc2626' }
 const TIER_MESSAGES = ['', '⚡ Kecepatan naik!', '🔥 Kecepatan maksimal!']
 
 export class GameScene extends Phaser.Scene {
@@ -51,6 +54,10 @@ export class GameScene extends Phaser.Scene {
     this.drawButtons()
     this._buildPopup()
     this.activeIndicator = this.add.graphics().setDepth(3)
+
+    this.activeItemLabel = this.add.text(GAME_WIDTH / 2, 115, '', {
+      fontSize: '18px', color: '#064e3b', fontStyle: 'bold', fontFamily: FONT
+    }).setOrigin(0.5).setDepth(2)
   }
 
   _drawBackground() {
@@ -89,10 +96,10 @@ export class GameScene extends Phaser.Scene {
 
     const createRoller = (rx, ry) => {
       const container = this.add.container(rx, ry).setDepth(2)
-      
+
       // Outer rim
       const rim = this.add.circle(0, 0, rR, 0x0f172a).setStrokeStyle(4, 0x475569)
-      
+
       // Spinner spokes/dots
       const spokes = this.add.graphics()
       spokes.fillStyle(0x334155)
@@ -101,10 +108,10 @@ export class GameScene extends Phaser.Scene {
         const dy = Math.sin(angle) * (rR - 22)
         spokes.fillCircle(dx, dy, 7)
       }
-      
+
       // Center axle
       const axle = this.add.circle(0, 0, 14, 0x1e293b).setStrokeStyle(3, 0x64748b)
-      
+
       container.add([rim, spokes, axle])
       return container
     }
@@ -135,16 +142,25 @@ export class GameScene extends Phaser.Scene {
 
     // Waktu (left)
     this.add.text(24, 8, 'WAKTU', { fontSize: '11px', color: '#9ca3af', fontStyle: 'bold' })
-    this.timeLabel = this.add.text(20, 25, '01:30', { fontSize: '40px', color: '#064e3b', fontStyle: 'bold' })
+    this.timeLabel = this.add.text(20, 25, '01:00', { fontSize: '40px', color: '#064e3b', fontStyle: 'bold' })
 
     // Skor (right)
     this.add.text(GAME_WIDTH - 24, 8, 'SKOR', { fontSize: '11px', color: '#9ca3af', fontStyle: 'bold' }).setOrigin(1, 0)
     this.scoreLabel = this.add.text(GAME_WIDTH - 20, 25, '0', { fontSize: '40px', color: '#1e40af', fontStyle: 'bold' }).setOrigin(1, 0)
 
-    // Combo (center)
-    this.comboLabel = this.add.text(GAME_WIDTH / 2, HUD_H / 2, '', {
+    // Combo (center-left area)
+    this.comboLabel = this.add.text(GAME_WIDTH / 2 - 40, HUD_H / 2, '', {
       fontSize: '16px', color: '#d97706', fontStyle: 'bold'
     }).setOrigin(0.5)
+
+    // Lives (center-right area — 3 heart icons)
+    this.lifeIcons = []
+    for (let i = 0; i < START_LIVES; i++) {
+      const icon = this.add.text(GAME_WIDTH / 2 + 80 + i * 24, HUD_H / 2, '❤️', {
+        fontSize: '20px'
+      }).setOrigin(0.5)
+      this.lifeIcons.push(icon)
+    }
   }
 
   drawButtons() {
@@ -175,7 +191,7 @@ export class GameScene extends Phaser.Scene {
       const btnGfx = this.add.graphics()
       btnGfx.fillStyle(CAT_BTN_COLOR[cat])
       btnGfx.fillRoundedRect(-btnWidth / 2, -BTN_HEIGHT / 2, btnWidth, BTN_HEIGHT, 24)
-      
+
       // Outline border
       btnGfx.lineStyle(3, BORDER_COLORS[cat])
       btnGfx.strokeRoundedRect(-btnWidth / 2, -BTN_HEIGHT / 2, btnWidth, BTN_HEIGHT, 24)
@@ -310,6 +326,21 @@ export class GameScene extends Phaser.Scene {
     })
   }
 
+  _animateLifeLost(livesRemaining) {
+    // Fade out the icon that was just lost (index = livesRemaining, 0-based)
+    const icon = this.lifeIcons[livesRemaining]
+    if (icon) {
+      this.tweens.add({
+        targets: icon,
+        alpha: 0.15,
+        scaleX: 0.5,
+        scaleY: 0.5,
+        duration: 300,
+        ease: 'Power2'
+      })
+    }
+  }
+
   onCategoryTap(category) {
     resumeAudio()
     const item = this.conveyor.topmost()
@@ -355,10 +386,11 @@ export class GameScene extends Phaser.Scene {
       const r = this.scoring.wrong()
       playWrong()
       this.cameras.main.shake(280, 0.015)
+      this._animateLifeLost(r.lives)
 
       const correctLabel = CATEGORY_LABEL[item.data.category]
       this._showPopup(
-        `❌ Salah! ${r.delta}  →  ${correctLabel}`,
+        `❌ Salah! (-1 nyawa)  →  ${correctLabel}`,
         `${item.data.name} termasuk ${correctLabel}.\n${item.data.funFact}`,
         0x7f1d1d
       )
@@ -399,13 +431,18 @@ export class GameScene extends Phaser.Scene {
       if (sprite) sprite.x = this.beltXForItemX(it.x)
     }
 
-    // Highlight active (topmost) item
+    // Highlight active (topmost) item + show name label
     const topItem = this.conveyor.topmost()
     this.activeIndicator.clear()
     if (topItem) {
       const topX = this.beltXForItemX(topItem.x)
       this.activeIndicator.lineStyle(3, 0xfbbf24, 0.85)
       this.activeIndicator.strokeCircle(topX, BELT_Y, ITEM_RADIUS + 10)
+      this.activeItemLabel
+        .setText(topItem.data.name)
+        .setColor(CAT_TEXT_COLOR[topItem.data.category])
+    } else {
+      this.activeItemLabel.setText('')
     }
 
     if (this.popupTimer > 0) {
@@ -435,12 +472,23 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.scoreLabel.setText(`${this.scoring.score}`)
-    this.comboLabel.setText(this.scoring.combo >= 2 ? `🔥 Combo x${this.scoring.combo}` : '')
+    this.comboLabel.setText(this.scoring.combo >= 2 ? `🔥 x${this.scoring.combo}` : '')
+
+    // Early game-over: lives depleted
+    if (this.scoring.isOutOfLives()) {
+      this.scene.start(SCENE_KEYS.GAME_OVER, {
+        summary: this.scoring.summary(),
+        seenItems: [...this.seenItems.values()],
+        endReason: 'no-lives'
+      })
+      return
+    }
 
     if (this.timer.isDone()) {
       this.scene.start(SCENE_KEYS.GAME_OVER, {
         summary: this.scoring.summary(),
-        seenItems: [...this.seenItems.values()]
+        seenItems: [...this.seenItems.values()],
+        endReason: 'time-up'
       })
     }
   }

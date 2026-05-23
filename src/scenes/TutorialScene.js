@@ -10,7 +10,7 @@ const STEPS = [
   {
     title: 'Cara Main (2/3)',
     body: 'Tap kategori yang tepat sebelum sampah melewatinya.\n🟢 Organik  🟡 Anorganik  🔴 B3\n\n(Catatan: Anorganik mencakup Daur Ulang & Residu seperti popok & sachet!)',
-    badge: '✅ Benar +10  ❌ Salah -5'
+    badge: '✅ Benar +10  ❌ Salah: -1 nyawa  (kamu punya 3)'
   },
   {
     title: 'Cara Main (3/3)',

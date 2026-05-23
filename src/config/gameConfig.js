@@ -3,8 +3,10 @@
 
 export const ROUND_SECONDS = 60
 
+export const START_LIVES = 3
+
 export const SCORE_CORRECT = 10
-export const SCORE_WRONG = -5
+export const SCORE_WRONG = 0
 export const SCORE_MISS = -3
 export const COMBO_THRESHOLD = 5
 export const COMBO_BONUS = 25

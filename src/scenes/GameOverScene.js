@@ -12,9 +12,11 @@ export class GameOverScene extends Phaser.Scene {
   init(data) {
     this.summary = data?.summary ?? {
       score: 0, maxCombo: 0, correctCount: 0,
-      wrongCount: 0, missCount: 0, accuracy: 0
+      wrongCount: 0, missCount: 0, accuracy: 0,
+      lives: 0, livesUsed: 3
     }
     this.seenItems = data?.seenItems ?? []
+    this.endReason = data?.endReason ?? 'time-up'
   }
 
   create() {
@@ -53,8 +55,17 @@ export class GameOverScene extends Phaser.Scene {
     }
 
     // Header
-    const headerColor = isNewRecord ? '#d97706' : '#064e3b'
-    const headerText = isNewRecord ? '🏆 Rekor Baru!' : '⏱ Waktu Habis!'
+    let headerColor, headerText
+    if (isNewRecord) {
+      headerColor = '#d97706'
+      headerText = '🏆 Rekor Baru!'
+    } else if (this.endReason === 'no-lives') {
+      headerColor = '#dc2626'
+      headerText = '💔 Nyawa Habis!'
+    } else {
+      headerColor = '#064e3b'
+      headerText = '⏱ Waktu Habis!'
+    }
     this.add.text(cx, 54, headerText, {
       fontSize: '34px', color: headerColor, fontStyle: 'bold', fontFamily: FONT
     }).setOrigin(0.5)
@@ -62,28 +73,28 @@ export class GameOverScene extends Phaser.Scene {
     // Score Card Background
     const scoreCard = this.add.graphics()
     scoreCard.fillStyle(0xffffff, 0.85)
-    scoreCard.fillRoundedRect(32, 100, GAME_WIDTH - 64, 120, 20)
+    scoreCard.fillRoundedRect(32, 100, GAME_WIDTH - 64, 150, 20)
     scoreCard.lineStyle(2, 0xd1fae5)
-    scoreCard.strokeRoundedRect(32, 100, GAME_WIDTH - 64, 120, 20)
+    scoreCard.strokeRoundedRect(32, 100, GAME_WIDTH - 64, 150, 20)
 
     // Score
-    this.add.text(cx, 142, `${this.summary.score}`, {
+    this.add.text(cx, 138, `${this.summary.score}`, {
       fontSize: '56px', color: '#d97706', fontStyle: 'bold', fontFamily: FONT
     }).setOrigin(0.5)
-    this.add.text(cx, 194, 'poin', {
+    this.add.text(cx, 185, 'poin', {
       fontSize: '15px', color: '#9ca3af', fontFamily: FONT
     }).setOrigin(0.5)
 
     // Record line
     if (isNewRecord) {
-      const rec = this.add.text(cx, 240, '✨ Skor tertinggi baru!', {
+      const rec = this.add.text(cx, 222, '✨ Skor tertinggi baru!', {
         fontSize: '16px', color: '#16a34a', fontStyle: 'bold', fontFamily: FONT
       }).setOrigin(0.5)
       this.tweens.add({ targets: rec, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1 })
     } else {
       const hs = loadHighScore()
       if (hs > 0) {
-        this.add.text(cx, 240, `🏆 Rekor Terbaik: ${hs} poin`, {
+        this.add.text(cx, 222, `🏆 Rekor Terbaik: ${hs} poin`, {
           fontSize: '16px', color: '#b45309', fontStyle: 'bold', fontFamily: FONT
         }).setOrigin(0.5)
       }
@@ -97,8 +108,8 @@ export class GameOverScene extends Phaser.Scene {
     this._buildButtons(cx, 484)
 
     // Education summary below buttons (clean, overflow-free)
-    this._drawDivider(650)
-    this._buildEducationSection(cx, 665)
+    this._drawDivider(656)
+    this._buildEducationSection(cx, 674)
   }
 
   _drawDivider(y) {
@@ -110,9 +121,10 @@ export class GameOverScene extends Phaser.Scene {
   // Premium Grid-Based Card Stats Display
   _drawStats(startY) {
     const cx = GAME_WIDTH / 2
+    const livesUsed = this.summary.livesUsed ?? this.summary.wrongCount
     const stats = [
       { label: 'Benar', value: this.summary.correctCount, color: 0x16a34a, emoji: '✅' },
-      { label: 'Salah', value: this.summary.wrongCount, color: 0xdc2626, emoji: '❌' },
+      { label: 'Nyawa Terpakai', value: `${livesUsed}/3`, color: 0xdc2626, emoji: '💔' },
       { label: 'Lewat', value: this.summary.missCount, color: 0x6b7280, emoji: '💨' },
       { label: 'Combo Max', value: this.summary.maxCombo, color: 0xd97706, emoji: '🔥' },
       { label: 'Akurasi', value: `${Math.round(this.summary.accuracy * 100)}%`, color: 0x2563eb, emoji: '🎯' }
@@ -177,52 +189,49 @@ export class GameOverScene extends Phaser.Scene {
       this.scene.start(SCENE_KEYS.MENU)
     }, 0xd1d5db)
 
-    // Bagikan Skor Section (Title + 4 Social Buttons)
-    this.add.text(cx, topY + 98, '📢 BAGIKAN SKOR', {
+    // Bagikan Skor Section (Title + 4 Social Buttons with increased spacing)
+    this.add.text(cx, topY + 90, '📢 BAGIKAN SKOR', {
       fontSize: '11px', color: '#9ca3af', fontStyle: 'bold', fontFamily: FONT
     }).setOrigin(0.5)
 
-    const shareY = topY + 128
+    const shareY = topY + 132
     const btnGap = 80
-    const text = `Saya berhasil memilah ${this.summary.correctCount} sampah dan meraih skor ${this.summary.score} di PilahYuk! 🗑️♻️\nAyo uji ketangkasan pilah sampahmu selama 60 detik di: ${GAME_URL}`
+    const livesUsed = this.summary.livesUsed ?? this.summary.wrongCount
+    const text = `Saya pilah ${this.summary.correctCount} sampah dengan ${livesUsed}/3 nyawa terpakai di PilahYuk! 🗑️♻️\nAyo uji ketangkasan pilah sampahmu selama 60 detik di: ${GAME_URL}`
 
     const sharePlatforms = [
       {
         name: 'WhatsApp',
         color: 0x25D366,
-        emoji: '💬',
         url: `https://wa.me/?text=${encodeURIComponent(text)}`
       },
       {
         name: 'Telegram',
         color: 0x0088cc,
-        emoji: '✈️',
         url: `https://t.me/share/url?url=${encodeURIComponent(GAME_URL)}&text=${encodeURIComponent(text)}`
       },
       {
         name: 'Facebook',
         color: 0x1877F2,
-        emoji: '👥',
         url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(GAME_URL)}`
       },
       {
         name: 'Twitter',
         color: 0x111111,
-        emoji: '✖️',
         url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`
       }
     ]
 
     sharePlatforms.forEach((p, idx) => {
       const px = cx - (btnGap * 1.5) + idx * btnGap
-      this._makeCircleButton(px, shareY, 48, p.color, '#ffffff', p.emoji, 18, () => {
+      this._makeCircleButton(px, shareY, 48, p.color, '#ffffff', p.name, 18, () => {
         window.open(p.url, '_blank')
       })
     })
   }
 
-  // Circular 3D Social sharing button
-  _makeCircleButton(x, y, size, fillColor, textColor, emoji, fontSize, onTap) {
+  // Circular 3D Social sharing button with dynamic custom vector icons instead of emojis
+  _makeCircleButton(x, y, size, fillColor, textColor, platform, fontSize, onTap) {
     const btnContainer = this.add.container(x, y)
 
     // Shadow
@@ -240,11 +249,81 @@ export class GameOverScene extends Phaser.Scene {
     shineGfx.fillStyle(0xffffff, 0.12)
     shineGfx.fillCircle(-2, -2, size / 2 - 4)
 
-    const emojiText = this.add.text(0, 0, emoji, {
-      fontSize: `${fontSize}px`, color: textColor, fontFamily: FONT
-    }).setOrigin(0.5)
+    // Draw standard-compliant custom vector logo graphics
+    let iconElement
+    if (platform === 'WhatsApp') {
+      const iconGfx = this.add.graphics()
+      // White speech bubble body
+      iconGfx.fillStyle(0xffffff)
+      iconGfx.fillCircle(0, -1, 10)
+      iconGfx.beginPath()
+      iconGfx.moveTo(-8, 4)
+      iconGfx.lineTo(-10, 10)
+      iconGfx.lineTo(-4, 7)
+      iconGfx.closePath()
+      iconGfx.fillPath()
 
-    btnContainer.add([shadowGfx, btnGfx, shineGfx, emojiText])
+      // Green telephone emoji receiver precisely positioned inside speech bubble
+      const phoneText = this.add.text(0.5, -1, '📞', { fontSize: '11px' }).setOrigin(0.5)
+      
+      const iconContainer = this.add.container(0, 0)
+      iconContainer.add([iconGfx, phoneText])
+      iconElement = iconContainer
+    } else if (platform === 'Telegram') {
+      const iconGfx = this.add.graphics()
+      
+      // Left wing (pure white)
+      iconGfx.fillStyle(0xffffff)
+      iconGfx.beginPath()
+      iconGfx.moveTo(8, -8)
+      iconGfx.lineTo(-8, -1.5)
+      iconGfx.lineTo(-1.5, 1.5)
+      iconGfx.closePath()
+      iconGfx.fillPath()
+
+      // Right wing (shaded grey-white for premium 3D paper plane look)
+      iconGfx.fillStyle(0xe2e8f0)
+      iconGfx.beginPath()
+      iconGfx.moveTo(8, -8)
+      iconGfx.lineTo(-1.5, 1.5)
+      iconGfx.lineTo(1.5, 7.5)
+      iconGfx.closePath()
+      iconGfx.fillPath()
+      
+      iconElement = iconGfx
+    } else if (platform === 'Facebook') {
+      // Bold white 'f' slightly shifted down-right to look identical to FB logo
+      iconElement = this.add.text(3, 4, 'f', {
+        fontSize: '28px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        fontFamily: FONT
+      }).setOrigin(0.5)
+    } else if (platform === 'Twitter') {
+      // Modern X logo
+      const iconGfx = this.add.graphics()
+      iconGfx.fillStyle(0xffffff)
+      
+      // Main thick diagonal bar
+      iconGfx.beginPath()
+      iconGfx.moveTo(-7, -7)
+      iconGfx.lineTo(-4, -7)
+      iconGfx.lineTo(7, 7)
+      iconGfx.lineTo(4, 7)
+      iconGfx.closePath()
+      iconGfx.fillPath()
+
+      // Thin crossing diagonal bar
+      iconGfx.lineStyle(1.8, 0xffffff)
+      iconGfx.lineBetween(6.5, -7, -6.5, 7)
+
+      iconElement = iconGfx
+    }
+
+    btnContainer.add([shadowGfx, btnGfx, shineGfx])
+    if (iconElement) {
+      btnContainer.add(iconElement)
+    }
 
     const hit = this.add.circle(0, 0, size / 2, 0x000000, 0)
       .setInteractive({ useHandCursor: true })

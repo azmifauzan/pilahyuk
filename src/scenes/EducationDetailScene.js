@@ -140,8 +140,8 @@ export class EducationDetailScene extends Phaser.Scene {
       this.updateList()
     })
 
-    // 2. Horizontal Category Filter Badges with Custom Weights/Widths to prevent overlapping
-    const tabsY = 162
+    // 2. Horizontal Category Filter Badges with Custom Weights/Widths to prevent overlapping (perfectly spaced)
+    const tabsY = 156
     const tabs = [
       { id: 'all', label: 'Semua', color: 0x475569, activeColor: 0x1e293b, width: 82 },
       { id: 'organik', label: '🟢 Organik', color: 0x16a34a, activeColor: 0x15803d, width: 126 },
@@ -226,7 +226,7 @@ export class EducationDetailScene extends Phaser.Scene {
     this.listObjects = []
 
     const cx = GAME_WIDTH / 2
-    const startCardY = 202
+    const startCardY = 240
     const cardSpacing = 114
     const cardW = GAME_WIDTH - 32
     const cardH = 104
@@ -309,7 +309,7 @@ export class EducationDetailScene extends Phaser.Scene {
     this.pageObjects = []
 
     const cx = GAME_WIDTH / 2
-    const pagY = 668
+    const pagY = 672
     const btnW = 90
     const btnH = 34
 
@@ -397,7 +397,7 @@ export class EducationDetailScene extends Phaser.Scene {
     // Bottom divider
     const divBottom = this.add.graphics()
     divBottom.lineStyle(1.5, 0xd1fae5)
-    divBottom.lineBetween(16, 722, GAME_WIDTH - 16, 722)
+    divBottom.lineBetween(16, 712, GAME_WIDTH - 16, 712)
 
     // Button specs
     const backBtnY = GAME_HEIGHT - 66

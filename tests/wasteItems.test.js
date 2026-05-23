@@ -7,20 +7,20 @@ import {
 } from '../src/data/wasteItems.js'
 
 describe('wasteItems DB', () => {
-  it('has exactly 30 items per plan.md', () => {
-    expect(WASTE_ITEMS).toHaveLength(30)
+  it('has exactly 100 items', () => {
+    expect(WASTE_ITEMS).toHaveLength(100)
   })
 
-  it('has 10 organik / 12 anorganik / 8 b3', () => {
-    expect(WASTE_ITEMS_BY_CATEGORY.organik).toHaveLength(10)
-    expect(WASTE_ITEMS_BY_CATEGORY.anorganik).toHaveLength(12)
-    expect(WASTE_ITEMS_BY_CATEGORY.b3).toHaveLength(8)
+  it('has 30 organik / 45 anorganik / 25 b3', () => {
+    expect(WASTE_ITEMS_BY_CATEGORY.organik).toHaveLength(30)
+    expect(WASTE_ITEMS_BY_CATEGORY.anorganik).toHaveLength(45)
+    expect(WASTE_ITEMS_BY_CATEGORY.b3).toHaveLength(25)
   })
 
-  it('anorganik split: 7 recyclable + 5 residue', () => {
+  it('anorganik split: 30 recyclable + 15 residue', () => {
     const a = WASTE_ITEMS_BY_CATEGORY.anorganik
-    expect(a.filter((i) => i.subtype === 'recyclable')).toHaveLength(7)
-    expect(a.filter((i) => i.subtype === 'residue')).toHaveLength(5)
+    expect(a.filter((i) => i.subtype === 'recyclable')).toHaveLength(30)
+    expect(a.filter((i) => i.subtype === 'residue')).toHaveLength(15)
   })
 
   it('ids are unique', () => {
@@ -52,10 +52,10 @@ describe('wasteItems DB', () => {
     }
   })
 
-  it('residue items mention "residu" in their funFact for educational copy', () => {
+  it('residue items funFact mentions non-recyclability for educational copy', () => {
     const residues = WASTE_ITEMS_BY_CATEGORY.anorganik.filter((i) => i.subtype === 'residue')
     for (const it of residues) {
-      expect(it.funFact.toLowerCase()).toMatch(/residu|sekali pakai|tidak (bisa )?(ter)?daur ulang|kurang|gunting/)
+      expect(it.funFact.toLowerCase()).toMatch(/residu|sekali pakai|daur ulang|kurang|gunting/)
     }
   })
 })

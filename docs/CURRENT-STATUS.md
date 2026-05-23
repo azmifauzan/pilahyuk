@@ -7,7 +7,7 @@
 
 ## Ringkasan
 
-- **Fase selesai:** Phase 0 (Setup), Phase 1 (MVP Core), Phase 2 (Polish), Phase 3 (Branding & Distribusi).
+- **Fase selesai:** Phase 0 (Setup), Phase 1 (MVP Core), Phase 2 (Polish), Phase 3 (Branding & Distribusi), Phase 3.5 (Lives + Item Naming).
 - **Fase berjalan:** —
 - **Fase berikutnya:** Phase 4 — Backend & Admin Panel (lihat `docs/PLAN.md`).
 - **Belum diverifikasi:** DNS `pilahyuk.aspriai.my.id` aktif, image `azmifauzan/pilahyuk:latest` benar-benar terpush ke Docker Hub, validasi list item ke DLH/RT.
@@ -51,8 +51,8 @@ src/
     MenuScene.js                 ✅ Animated title card, badge kategori, mini conveyor decor, highscore badge, 3 button (Main / Cara Main / Tentang)
     TutorialScene.js             ✅ 3 step (conveyor demo, button demo, combo demo)
     AboutScene.js                ✅ 4 section slide-in + back button
-    GameScene.js                 ✅ HUD (timer+score+combo), belt+roller, 3 tombol kategori, popup edukasi (correct/wrong/residue), burst effect, tier flash, camera shake, timer pulse, low-time color
-    GameOverScene.js             ✅ Score card, isNewRecord confetti, stats grid, main lagi/menu, share WA/TG/FB/Twitter, link ke EducationDetail
+    GameScene.js                 ✅ HUD (timer+score+combo+3 nyawa), belt+roller, label nama item aktif, 3 tombol kategori, popup edukasi (correct/wrong/residue), early game-over (nyawa habis), burst effect, tier flash, camera shake, timer pulse, low-time color
+    GameOverScene.js             ✅ Score card, header dinamis (Waktu Habis/Nyawa Habis/Rekor Baru), isNewRecord confetti, stats grid (incl. livesUsed), main lagi/menu, share WA/TG/FB/Twitter, link ke EducationDetail
     EducationDetailScene.js      ✅ Pustaka pemilahan (toggle "Game Ini" / "Semua 100" + tab kategori + paginasi 4/halaman)
 public/                          ✅ (kosong, asset = emoji + procedural audio)
 tests/
@@ -81,8 +81,9 @@ README.md / LICENSE (MIT) / docs/CONTRIBUTING.md ✅
 | Aturan | Plan | Implementasi |
 |---|---|---|
 | Round length | 60s | `ROUND_SECONDS = 60` ✅ |
+| Nyawa | 3 per ronde | `START_LIVES = 3` ✅ |
 | Skor benar | +10 | `SCORE_CORRECT = 10` ✅ |
-| Skor salah | -5 | `SCORE_WRONG = -5` ✅ |
+| Skor salah | 0 poin (-1 nyawa) | `SCORE_WRONG = 0` ✅ |
 | Miss | -3 | `SCORE_MISS = -3` ✅ |
 | Combo threshold | 5x | `COMBO_THRESHOLD = 5` ✅ |
 | Combo bonus | +25 | `COMBO_BONUS = 25` ✅ |
@@ -112,7 +113,7 @@ Tiap item punya `id`, `name`, `emoji`, `category`, `subtype`, `funFact`. Belum d
 ## Fitur Pemain
 
 - ✅ Conveyor belt left-to-right, sampah keluar di kanan = miss
-- ✅ Tap 3 tombol kategori → judge → +10/-5 + popup edukasi
+- ✅ Tap 3 tombol kategori → judge → +10/−nyawa + popup edukasi
 - ✅ Subtype `residue` muncul popup khusus warna gold (Anorganik Residu) bahkan saat benar
 - ✅ Combo bonus tiap 5 benar berturut
 - ✅ Difficulty progression 3 tier dengan flash banner
@@ -142,7 +143,7 @@ Tiap item punya `id`, `name`, `emoji`, `category`, `subtype`, `funFact`. Belum d
 
 ## Catatan Inkonsistensi / Hutang Teknis
 
-1. `README.md` baris 16 menyebut **"selama 90 detik"** padahal `ROUND_SECONDS = 60`. Perlu diperbaiki (sekedar tipo dokumentasi).
+1. ~~`README.md` baris 16 menyebut "selama 90 detik"~~ — **diperbaiki di Phase 3.5**.
 2. `coverage/` dan `dist/` masih dicommit/tertinggal di working tree. Cek `.gitignore`.
 3. `playwright-core` di devDependencies tapi belum ada test E2E (mungkin untuk Phase 4 atau peninggalan eksperimen).
 4. i18n / Bahasa Inggris belum ada — single-language Bahasa Indonesia saat ini, English version masuk roadmap Phase 5 (go international).
